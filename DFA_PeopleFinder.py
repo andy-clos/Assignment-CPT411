@@ -15,8 +15,6 @@ It works by scanning a full paragraph, thennstarting DFA simulation at every cha
 
 from __future__ import annotations
 
-import argparse
-from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -121,119 +119,84 @@ def dfa_step(state: str, ch: str) -> str:
     return TRANSITIONS.get(state, {}).get(ch, TRAP_STATE)
 
 
-def scan_text(text: str) -> List[Match]:
-    """Scan text and return all DFA matches with index positions.
+# def scan_text(text: str) -> List[Match]:
+#     """Scan text and return all DFA matches with index positions.
 
-    The scanner starts from every character position and simulates
-    DFA transitions one character at a time until accept or trap.
-    """
-    matches: List[Match] = []
+#     The scanner starts from every character position and simulates
+#     DFA transitions one character at a time until accept or trap.
+#     """
+#     matches: List[Match] = []
+
+#     for start_idx in range(len(text)):
+#         state = START_STATE
+
+#         for pos in range(start_idx, len(text)):
+#             state = dfa_step(state, text[pos])
+
+#             if state == TRAP_STATE:
+#                 break
+
+#             if state in ACCEPT_STATES:
+#                 matches.append(
+#                     Match(
+#                         pattern=ACCEPT_STATES[state],
+#                         start=start_idx,
+#                         end=pos,
+#                         text=text[start_idx : pos + 1],
+#                     )
+#                 )
+#                 break
+
+#     return matches
+
+"""DFA Processes"""
+
+def scan_text_with_log(text: str):
+    log = []
+    matches = []
 
     for start_idx in range(len(text)):
         state = START_STATE
+        buffer = ""
 
         for pos in range(start_idx, len(text)):
-            state = dfa_step(state, text[pos])
+            ch = text[pos]
+            prev_state = state
+
+            state = dfa_step(state, ch)
+
+            buffer += ch
+
+            # Action description
+            if prev_state == START_STATE:
+                action = f"Start with '{ch}'"
+            elif state == TRAP_STATE:
+                action = f"Invalid transition with '{ch}'"
+            elif state in ACCEPT_STATES:
+                action = f"Accept pattern: {ACCEPT_STATES[state]}"
+            else:
+                action = f"Continue with '{buffer}'"
+
+            log.append({
+                "Character": ch,
+                "Previous State": prev_state,
+                "Action/Details": action,
+                "New State": state,
+                "Current Buffer": buffer
+            })
 
             if state == TRAP_STATE:
                 break
 
             if state in ACCEPT_STATES:
                 matches.append(
-                    Match(
-                        pattern=ACCEPT_STATES[state],
-                        start=start_idx,
-                        end=pos,
-                        text=text[start_idx : pos + 1],
+                        Match(
+                            pattern=ACCEPT_STATES[state],
+                            start=start_idx,
+                            end=pos,
+                            text=text[start_idx : pos + 1],
+                        )
                     )
-                )
                 break
 
-    return matches
-
-
-def build_highlighted_snippets(text: str, matches: List[Match], radius: int = 18) -> List[str]:
-    snippets: List[str] = []
-    for m in matches:
-        left = max(0, m.start - radius)
-        right = min(len(text), m.end + radius + 1)
-        chunk = text[left:right]
-        if left > 0:
-            chunk = "... " + chunk
-        if right < len(text):
-            chunk = chunk + " ..."
-        snippets.append(chunk)
-    return snippets
-
-
-def build_boldface_text(text: str, matches: List[Match]) -> str:
-    """Return text with each matched pattern wrapped in **...** for demo visualization."""
-    if not matches:
-        return text
-
-    sorted_matches = sorted(matches, key=lambda m: m.start)
-    pieces: List[str] = []
-    cursor = 0
-
-    for m in sorted_matches:
-        if m.start < cursor:
-            continue
-        pieces.append(text[cursor:m.start])
-        pieces.append("**" + text[m.start : m.end + 1] + "**")
-        cursor = m.end + 1
-
-    pieces.append(text[cursor:])
-    return "".join(pieces)
-
-
-def print_demo_output(text: str, matches: List[Match]) -> None:
-    status = "ACCEPT" if matches else "REJECT"
-    counts = Counter(m.pattern for m in matches)
-
-    print("<DFA-DEMO-OUTPUT>")
-    print(f"- <PATTERN-SET(INPUT-STRINGS)>: {', '.join(PATTERN_SET)}")
-    print(f"- <TEXT-USED-FOR-DEMO>: {text}")
-    print(f"- <STATUS>: {status}")
-    print("- <ADDITIONAL-INFORMATION>:")
-
-    if matches:
-        print("  - <POSITION-OF-PATTERN-FOUND>:")
-        for m in matches:
-            print(f"    - <{m.pattern}> found at <position {m.start}> (end {m.end})")
-
-        print("  - <OCCURRENCES-OF-PATTERNS>:")
-        for pattern in PATTERN_SET:
-            print(f"    - <{pattern}>: {counts.get(pattern, 0)}")
-        print(f"    - <TOTAL-OCCURRENCES>: {len(matches)}")
-
-        print("  - <BOLDFACE-IN-TEXT>:")
-        print("    - " + "\n    - ".join(build_boldface_text(text, matches).split("\n")))
-        print("  - <HIGHLIGHTED-SNIPPETS>:")
-        for snippet in build_highlighted_snippets(text, matches):
-            print("    - " + snippet)
-    else:
-        print("  - <POSITION-OF-PATTERN-FOUND>: none")
-        print("  - <OCCURRENCES-OF-PATTERNS>: 0")
-        print("  - <VISUALIZATION-BOLDFACE-IN-TEXT>: no pattern occurrence")
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Scan a paragraph using a character-level DFA for target names."
-    )
-    parser.add_argument(
-        "text",
-        nargs="*",
-        help="Paragraph text to scan. If omitted, the script will prompt for input.",
-    )
-    args = parser.parse_args()
-
-    paragraph = " ".join(args.text).strip() if args.text else ""
-    if not paragraph:
-        paragraph = input("Enter paragraph to scan: ").rstrip("\n")
-
-    matches = scan_text(paragraph)
-    print_demo_output(paragraph, matches)
-
-
-if __name__ == "__main__":
-    main()
+    return matches, log

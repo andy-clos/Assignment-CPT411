@@ -1,7 +1,10 @@
 # Assignment-CPT411
 
 ## How to run the program
+
 1. Clone the repository by using "git clone https://github.com/andy-clos/Assignment-CPT411.git"
-2. Open terminal and type "python DFA_PeopleFinder.py"
-3. Enter you paragraph.
-4. Observe the individual names founded from the text
+2. Create a virtual environment
+    -python -m venv venv
+    -venv\Scripts\activate
+3.pip install -r requirements.txt
+4.streamlit run app.py
