@@ -16,6 +16,7 @@ It works by scanning a full paragraph, thennstarting DFA simulation at every cha
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -94,6 +95,16 @@ ACCEPT_STATES: Dict[str, str] = {
     "q105": "Jin Yi",
 }
 
+PATTERN_SET = [
+    "Steve Jobs",
+    "Mr Jobs",
+    "Barack Obama",
+    "Mr Obama",
+    "Tim Cook",
+    "Cory Moll",
+    "Jin Yi",
+]
+
 
 @dataclass
 class Match:
@@ -141,18 +152,69 @@ def scan_text(text: str) -> List[Match]:
     return matches
 
 
-def print_matches(matches: List[Match]) -> None:
+def build_highlighted_snippets(text: str, matches: List[Match], radius: int = 18) -> List[str]:
+    snippets: List[str] = []
+    for m in matches:
+        left = max(0, m.start - radius)
+        right = min(len(text), m.end + radius + 1)
+        chunk = text[left:right]
+        if left > 0:
+            chunk = "... " + chunk
+        if right < len(text):
+            chunk = chunk + " ..."
+        snippets.append(chunk)
+    return snippets
+
+
+def build_boldface_text(text: str, matches: List[Match]) -> str:
+    """Return text with each matched pattern wrapped in **...** for demo visualization."""
     if not matches:
-        print("No target names found.")
-        return
+        return text
 
-    print(f"Found {len(matches)} match(es):")
-    for i, m in enumerate(matches, start=1):
-        print(
-            f"{i}. pattern='{m.pattern}' text='{m.text}' "
-            f"start={m.start} end={m.end}"
-        )
+    sorted_matches = sorted(matches, key=lambda m: m.start)
+    pieces: List[str] = []
+    cursor = 0
 
+    for m in sorted_matches:
+        if m.start < cursor:
+            continue
+        pieces.append(text[cursor:m.start])
+        pieces.append("**" + text[m.start : m.end + 1] + "**")
+        cursor = m.end + 1
+
+    pieces.append(text[cursor:])
+    return "".join(pieces)
+
+
+def print_demo_output(text: str, matches: List[Match]) -> None:
+    status = "ACCEPT" if matches else "REJECT"
+    counts = Counter(m.pattern for m in matches)
+
+    print("<DFA-DEMO-OUTPUT>")
+    print(f"- <PATTERN-SET(INPUT-STRINGS)>: {', '.join(PATTERN_SET)}")
+    print(f"- <TEXT-USED-FOR-DEMO>: {text}")
+    print(f"- <STATUS>: {status}")
+    print("- <ADDITIONAL-INFORMATION>:")
+
+    if matches:
+        print("  - <POSITION-OF-PATTERN-FOUND>:")
+        for m in matches:
+            print(f"    - <{m.pattern}> found at <position {m.start}> (end {m.end})")
+
+        print("  - <OCCURRENCES-OF-PATTERNS>:")
+        for pattern in PATTERN_SET:
+            print(f"    - <{pattern}>: {counts.get(pattern, 0)}")
+        print(f"    - <TOTAL-OCCURRENCES>: {len(matches)}")
+
+        print("  - <BOLDFACE-IN-TEXT>:")
+        print("    - " + "\n    - ".join(build_boldface_text(text, matches).split("\n")))
+        print("  - <HIGHLIGHTED-SNIPPETS>:")
+        for snippet in build_highlighted_snippets(text, matches):
+            print("    - " + snippet)
+    else:
+        print("  - <POSITION-OF-PATTERN-FOUND>: none")
+        print("  - <OCCURRENCES-OF-PATTERNS>: 0")
+        print("  - <VISUALIZATION-BOLDFACE-IN-TEXT>: no pattern occurrence")
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -170,7 +232,7 @@ def main() -> None:
         paragraph = input("Enter paragraph to scan: ").rstrip("\n")
 
     matches = scan_text(paragraph)
-    print_matches(matches)
+    print_demo_output(paragraph, matches)
 
 
 if __name__ == "__main__":
