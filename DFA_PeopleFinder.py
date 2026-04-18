@@ -119,36 +119,6 @@ def dfa_step(state: str, ch: str) -> str:
     return TRANSITIONS.get(state, {}).get(ch, TRAP_STATE)
 
 
-# def scan_text(text: str) -> List[Match]:
-#     """Scan text and return all DFA matches with index positions.
-
-#     The scanner starts from every character position and simulates
-#     DFA transitions one character at a time until accept or trap.
-#     """
-#     matches: List[Match] = []
-
-#     for start_idx in range(len(text)):
-#         state = START_STATE
-
-#         for pos in range(start_idx, len(text)):
-#             state = dfa_step(state, text[pos])
-
-#             if state == TRAP_STATE:
-#                 break
-
-#             if state in ACCEPT_STATES:
-#                 matches.append(
-#                     Match(
-#                         pattern=ACCEPT_STATES[state],
-#                         start=start_idx,
-#                         end=pos,
-#                         text=text[start_idx : pos + 1],
-#                     )
-#                 )
-#                 break
-
-#     return matches
-
 """DFA Processes"""
 
 def scan_text_with_log(text: str):
