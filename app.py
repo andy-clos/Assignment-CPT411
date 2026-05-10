@@ -1,5 +1,7 @@
 import streamlit as st
 from collections import Counter
+import json
+import streamlit.components.v1 as components
 
 # Import from backend
 from DFA_PeopleFinder import scan_text_with_log, PATTERN_SET
@@ -220,6 +222,23 @@ if run:
     st.subheader("DFA Processing Log")
 
     if log:
-        st.dataframe(log, use_container_width=True)
+        log_json = json.dumps(log).replace("</", "<\\/")
+        components.html(
+            f"""
+            <script>
+                const dfaLog = {log_json};
+                console.groupCollapsed("DFA Processing Log");
+                for (const entry of dfaLog) {{
+                    console.log(
+                        `Run ${{entry.Run}} | Step ${{entry.Step}} | index ${{entry['Text Index']}} | ${{entry.Transition}} | ${{entry.Outcome}} | buffer: ${{entry['Current Buffer']}}`
+                    );
+                }}
+                console.table(dfaLog);
+                console.groupEnd();
+            </script>
+            """,
+            height=0,
+        )
+        st.caption("Log details were sent to your browser console. Open DevTools (F12) and view the Console tab.")
     else:
         st.write("No processing log available")

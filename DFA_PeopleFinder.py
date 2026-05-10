@@ -128,6 +128,7 @@ def scan_text_with_log(text: str):
     for start_idx in range(len(text)):
         state = START_STATE
         buffer = ""
+        run_id = start_idx + 1
 
         for pos in range(start_idx, len(text)):
             ch = text[pos]
@@ -136,8 +137,8 @@ def scan_text_with_log(text: str):
             state = dfa_step(state, ch)
 
             buffer += ch
+            step_number = pos - start_idx + 1
 
-            # Action description
             if prev_state == START_STATE:
                 action = f"Start with '{ch}'"
             elif state == TRAP_STATE:
@@ -147,12 +148,25 @@ def scan_text_with_log(text: str):
             else:
                 action = f"Continue with '{buffer}'"
 
+            if state == TRAP_STATE:
+                outcome = "Trap"
+            elif state in ACCEPT_STATES:
+                outcome = "Accept"
+            else:
+                outcome = "Continue"
+
             log.append({
+                "Run": run_id,
+                "Start Index": start_idx,
+                "Step": step_number,
+                "Text Index": pos,
                 "Character": ch,
                 "Previous State": prev_state,
+                "Transition": f"{prev_state} --{repr(ch)}--> {state}",
                 "Action/Details": action,
                 "New State": state,
-                "Current Buffer": buffer
+                "Current Buffer": buffer,
+                "Outcome": outcome,
             })
 
             if state == TRAP_STATE:
