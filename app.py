@@ -44,10 +44,8 @@ def highlight_text_html(text, matches):
     if not matches:
         return text.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
 
-    colors = ["#fff59d", "#a5d6a7", "#90caf9", "#ffccbc", "#ce93d8", "#80deea"]
-
+    colors = ["#fff59d", "#a5d6a7", "#90caf9", "#ffccbc", "#ce93d8", "#80deea","#f22816"]
     pattern_colors = {p: colors[i % len(colors)] for i, p in enumerate(PATTERN_SET)}
-
     sorted_matches = sorted(matches, key=lambda m: m.start)
 
     parts = []
