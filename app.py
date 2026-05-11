@@ -44,7 +44,7 @@ def highlight_text_html(text, matches):
     if not matches:
         return text.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
 
-    colors = ["#fff59d", "#a5d6a7", "#90caf9", "#ffccbc", "#ce93d8", "#80deea"]
+    colors = ["#fff59d", "#a5d6a7", "#90caf9", "#ffccbc", "#ce93d8", "#80deea","#f22816"]
 
     pattern_colors = {p: colors[i % len(colors)] for i, p in enumerate(PATTERN_SET)}
 
@@ -222,6 +222,8 @@ if run:
     st.subheader("DFA Processing Log")
 
     if log:
+        st.dataframe(log, use_container_width=True)
+
         log_json = json.dumps(log).replace("</", "<\\/")
         components.html(
             f"""
@@ -239,6 +241,6 @@ if run:
             """,
             height=0,
         )
-        st.caption("Log details were sent to your browser console. Open DevTools (F12) and view the Console tab.")
+        st.caption("Log details were also sent to your browser console. Open DevTools (F12) and view the Console tab.")
     else:
         st.write("No processing log available")
