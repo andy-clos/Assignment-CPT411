@@ -1,5 +1,7 @@
 import streamlit as st
 from collections import Counter
+import json
+import streamlit.components.v1 as components
 
 # Import from backend
 from DFA_PeopleFinder import scan_text_with_log, PATTERN_SET
